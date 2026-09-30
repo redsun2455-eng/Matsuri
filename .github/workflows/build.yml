@@ -1,0 +1,50 @@
+name: Build Matsuri APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract Matsuri project
+        run: |
+          mkdir project
+          unzip Matsuri_GitHub_Mobile_Upload.zip -d project
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Build Matsuri APK
+        working-directory: project
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Prepare APK
+        run: |
+          mkdir dist
+          cp project/build/outputs/apk/debug/*.apk dist/Matsuri-debug.apk
+
+      - name: Upload Matsuri APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Matsuri-APK
+          path: dist/Matsuri-debug.apk
